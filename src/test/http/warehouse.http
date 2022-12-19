@@ -1,0 +1,21 @@
+
+POST https://simhost-03d88d0efed83a0d3.agni.secondlife.io:12043/cap/aa98cc97-0989-4c4b-1734-267b04f2eb04
+
+{
+  "deliveryOrder": {
+    "customer": {
+      "key": "b5ab83d9-032c-4013-b10a-1dbf92245ee7"
+    },
+    "inventory": {
+      "name": "How to resize a ball"
+    }
+  }
+}
+
+###
+
+POST https://simhost-03d88d0efed83a0d3.agni.secondlife.io:12043/cap/aa98cc97-0989-4c4b-1734-267b04f2eb04
+
+ping
+
+###
