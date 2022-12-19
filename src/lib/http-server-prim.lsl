@@ -1,3 +1,14 @@
+/**
+ * RalVend components communicate with each other and with the back-end via 
+ * HTTP requests.
+ * Some components such as the Warehouse are capable of processing HTTP
+ * requests. To do this they need a public URL.
+ * This library file provides a wrapping environment facilitate the process
+ * of obtaining and maintaining a URL.
+ *
+ * Please, never use any variable that begins and ends with __. Instead, use the
+ * provided getters/setters functions.
+ */
 #ifndef RV_HTTP_SERVER_PRIM
 #define RV_HTTP_SERVER_PRIM
 

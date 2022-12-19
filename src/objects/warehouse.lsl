@@ -14,8 +14,9 @@ list glInitChecklist = [
   /* Am I synchronized with the back-end? */ TRUE /* mockup value*/
 ];
 
-generateSaleRecord(key gkCustomer, string psProdName) {
+generateSaleRecord(key gkCustomer, string psProdName, integer piPrice) {
   rvLog("Delivered: " + psProdName + " to " + llKey2Name(gkCustomer));
+  rvLog("Product sold for $L" + (string)piPrice);
     // Perform administrative tasks to record sales, 
     // notify involved perties, etc.
     // Recording the sale must include linking the customer to the product
@@ -173,7 +174,6 @@ state running {
       if (psBody == "ping") {
         llHTTPResponse(pkRequestId, HTTP_STATUS_OK, "pong");
       } else {
-        // Make  validations here
         string deliveryOrder = llJsonGetValue(psBody, ["deliveryOrder"]);
         if (deliveryOrder == JSON_NULL) {
           llHTTPResponse(pkRequestId, HTTP_STATUS_BAD_REQUEST, psBody);
@@ -182,6 +182,10 @@ state running {
           string sInventoryName = (string)llJsonGetValue(
             deliveryOrder,
             ["inventory", "name"]
+          );
+          integer iPrice = (integer)llJsonGetValue(
+            deliveryOrder,
+            ["order", "amount"]
           );
 
           if (!rvIsProductInStorage(sInventoryName)) {
@@ -194,7 +198,7 @@ state running {
               if (!infiniteStock) {
                 rvUpdateStockByQty(sInventoryName, -1);
               }
-              generateSaleRecord(kCustomer, sInventoryName);
+              generateSaleRecord(kCustomer, sInventoryName, iPrice);
               llHTTPResponse(pkRequestId, HTTP_STATUS_OK, psBody);
             } else {
               llHTTPResponse(pkRequestId, HTTP_STATUS_NOT_ACCEPTABLE, psBody);
