@@ -12,6 +12,8 @@
 #ifndef RV_HTTP_SERVER_PRIM
 #define RV_HTTP_SERVER_PRIM
 
+float HTTP_SELF_URL_CHECK_TIMEOUT = 60.0; // 5 minutes
+
 key __gkUrlRequestKey__;
 key __gkPingRequestKey__;
 float __gfTimeAtLastPing__ = 0;
@@ -44,11 +46,11 @@ rvPingUrl() {
   __gkPingRequestKey__ = llHTTPRequest(
     __gsSecureUrl__,
     [
-      HTTP_METHOD, "GET",
+      HTTP_METHOD, "POST",
       HTTP_VERBOSE_THROTTLE, FALSE,
       HTTP_BODY_MAXLENGTH, 16384
     ],
-    ""
+    "ping"
   );
   __gfTimeAtLastPing__ = llGetTime();
 }
@@ -60,7 +62,6 @@ rvRequestUrl() {
 
 rvRequestUrlCallback(key pkRequestId, string psMethod, string psBody) {
   if (psMethod == URL_REQUEST_DENIED) {
-    rvThrow("Failed to get a secure URL:\n \n" + psBody);
     __gsSecureUrl__ = "";
     __giUrlHealthOk__ = FALSE;
   } else if (psMethod == URL_REQUEST_GRANTED) {

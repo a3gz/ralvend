@@ -1,10 +1,6 @@
 #ifndef RV_HTTP
 #define RV_HTTP
 
-#include "ralvend/src/lib/errors.lsl"
-
-float HTTP_SELF_URL_CHECK_TIMEOUT = 300.0; // 5 minutes
-
 string HTTP_GET = "GET";
 string HTTP_POST = "POST";
 string HTTP_PUT = "PUT";

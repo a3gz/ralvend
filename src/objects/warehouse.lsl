@@ -1,26 +1,41 @@
 #include "ralvend/src/lib/warehouse-storage.lsl"
 #include "ralvend/src/lib/hover-text.lsl"
-#include "ralvend/src/lib/errors.lsl"
+#include "ralvend/src/lib/logs.lsl"
 #include "ralvend/src/lib/http.lsl"
-#include "ralvend/src/lib/http-server-prim.lsl"
+#include "ralvend/src/lib/http-prim-server.lsl"
 #include "ralvend/src/lib/raft/http.lsl"
 #include "ralvend/src/lib/state-texture.lsl"
 
-integer CHECKLIST_URL = 0;
+string BE_ENDPOINT_SALES = "/sales";
 
+integer CHECKLIST_URL = 0;
+integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
+
+key gkBackEndRequest;
+integer giPingTimeoutCounter = 0;
 key gkOperator;
 list glInitChecklist = [
   /* Is MY URL ready? */ FALSE,
   /* Am I synchronized with the back-end? */ TRUE /* mockup value*/
 ];
 
+backEndRequestCallback(integer piStatus, list plMetadata, string psBody); {
+  rvLogDebug("RESPONSE FROM BACKEND:")
+  rvLogDebug("Status: " + (string)piStatus);
+  rvLogDebug("Metadata: " + llList2CSV(plMetadata));
+  rvLogDebug("Body: " + psBody);
+}
+
 generateSaleRecord(key gkCustomer, string psProdName, integer piPrice) {
-  rvLog("Delivered: " + psProdName + " to " + llKey2Name(gkCustomer));
-  rvLog("Product sold for $L" + (string)piPrice);
-    // Perform administrative tasks to record sales, 
-    // notify involved perties, etc.
-    // Recording the sale must include linking the customer to the product
-    // in case they request a redelivery down the road.
+  rvLogDebug("Delivered: " + psProdName + " to " + llKey2Name(gkCustomer));
+  rvLogDebug("Product sold for $L" + (string)piPrice);
+
+  string sAsJson = rvComposeSaleRecordJson(gkCustomer, psProdName, piPrice);
+  rvLogDebug("POST sale record to backend:\n" + sAsJson);
+  gkBackEndRequest = rvBackEndPost(
+    rvBackEndMakeEndpoint(BE_ENDPOINT_SALES),
+    sAsJson
+  );
 }
 
 float getTimeout() {
@@ -30,11 +45,17 @@ float getTimeout() {
   return HTTP_SELF_URL_CHECK_TIMEOUT;
 }
 
+integer incrementPingTimeoutCounter() {
+  giPingTimeoutCounter += 1;
+  return giPingTimeoutCounter;
+}
+
 init() {
   rvCleanHoverText();
   rvRequestUrl();
   resetStorage();
   waitForReadyState(TRUE);
+  rvLogSetLevel(LOGLEVEL_DEBUG);
 }
 
 integer isOwnerOperating() {
@@ -49,6 +70,14 @@ integer isReady() {
     iReady = iReady && llList2Integer(glInitChecklist, i);
   }
   return iReady;
+}
+
+resetBackEndRequest() {
+  gkBackEndRequest = NULL_KEY;
+}
+
+resetPingTimeoutCounter() {
+  giPingTimeoutCounter = 0;
 }
 
 resetStorage() {
@@ -72,7 +101,7 @@ sayReport(string psState) {
     sReport += "URL: " + rvGetLastUrl() + "\n";
   }
   if (sReport != "") {
-    rvLog(sReport);
+    rvLogNotice(sReport);
   }
 }
 
@@ -98,9 +127,13 @@ waitForReadyState(integer piRestartTimer) {
 }
 
 default {
+  on_rez(integer start_param) {
+    resetPingTimeoutCounter();
+  }
+
   state_entry() {
     rvSetStateTexture(STATE_TEXTURE_IDLE);
-    rvLog("Stopped.");
+    rvLogDebug("Stopped.");
     init();
   }
 
@@ -120,6 +153,7 @@ default {
       if (!rvIsUrlHealthOk()) {
         rvRequestUrl();
       } else {
+        rvLogDebug("My URL is " + rvGetLastUrl());
         setInitChecklist(CHECKLIST_URL, TRUE);
       }
     }
@@ -128,10 +162,10 @@ default {
   timer() {
     waitForReadyState(FALSE);
     if (isReady()) {
-      rvLog("Ready! Changing to running state...");
+      rvLogDebug("Ready! Changing to running state...");
       state running;
     }
-    rvLog("Not Ready yet! Wait and check again...");
+    rvLogDebug("Not Ready yet! Wait and check again...");
     waitForReadyState(TRUE);
   }
 
@@ -139,6 +173,7 @@ default {
     setOperator(llDetectedKey(0));
     if (isOwnerOperating()) {
       sayReport("default");
+      resetPingTimeoutCounter();
     }
   }
 }
@@ -150,7 +185,7 @@ state running {
   state_entry() {
     rvCleanHoverText();
     rvSetStateTexture(STATE_TEXTURE_RUNNING);
-    rvLog("Running...");
+    rvLogWarning("Running...");
     llSetTimerEvent(getTimeout());
   }
 
@@ -167,11 +202,13 @@ state running {
   http_request(key pkRequestId, string psMethod, string psBody) {
     rvRequestUrlCallback(pkRequestId, psMethod, psBody);
     if (!rvIsUrlHealthOk()) {
+      rvLogError("Failed to get a secure URL:\n \n" + psBody);
       state shutdown;
     }
 
     if (psMethod == HTTP_POST) {
       if (psBody == "ping") {
+        rvLogDebug("Pong.");
         llHTTPResponse(pkRequestId, HTTP_STATUS_OK, "pong");
       } else {
         string deliveryOrder = llJsonGetValue(psBody, ["deliveryOrder"]);
@@ -213,18 +250,28 @@ state running {
     if (pkRequestId == rvGetPingRequestId()) {
       integer iPingOk = rvPingCallback(piStatus);
       if (!iPingOk) {
-        rvThrow("My URL is no longer responding to pings!, I must shutdown...");
-        state shutdown;
+        rvLogError("Ping response status: " + (string)piStatus);
+        if (piStatus = 504) {
+          rvLogError("Last ping timed out, I will pause for a while and try again...");
+          state paused;
+        } else {
+          rvLogError("My URL is no longer responding to pings!, I must shutdown...");
+          state shutdown;
+        }
       }
+    } else if (pkRequestId == gkBackEndRequest) {
+      resetBackEndRequest();
+      backEndRequestCallback(piStatus, plMetadata, psBody);
     }
 
     if (pkRequestId == NULL_KEY) {
-      rvThrow("Too many HTTP responses!");
+      rvLogError("Too many HTTP responses!");
     }
   }
 
   timer() {
     if (rvIsTimeToPingUrl()) {
+      rvLogDebug("Ping...");
       rvPingUrl();
     }
   }
@@ -240,14 +287,35 @@ state running {
 ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////
 
+state paused {
+  state_entry() {
+    float fTimeout = 5.0;
+    string sTimeout = (string)((integer)(fTimeout * 100) / 100);
+    rvLogDebug("Pausing for " + (string)sTimeout + " seconds...");
+    llSetTimerEvent(fTimeout);
+  }
+
+  timer() {
+    state running;
+  }
+}
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
 state shutdown {
   state_entry() {
     rvSetStateTexture(STATE_TEXTURE_SHUTTING_DOWN);
-    rvLog("Shutting down...");
+    rvLogWarning("Shutting down...");
     llSetTimerEvent(3.0);
   }
 
   timer() {
-    state default;
+    integer iCount = incrementPingTimeoutCounter();
+    if (iCount <= PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
+      state running;
+    } else {
+      state shutdown;
+    }
   }
 }
