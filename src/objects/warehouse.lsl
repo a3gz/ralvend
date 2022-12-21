@@ -318,7 +318,7 @@ state shutdown {
     if (iCount <= PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
       state running;
     } else {
-      state shutdown;
+      llResetScript();
     }
   }
 }

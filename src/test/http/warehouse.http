@@ -1,5 +1,5 @@
 
-POST https://simhost-03d88d0efed83a0d3.agni.secondlife.io:12043/cap/662a1e89-f219-bbda-6167-80ee8c8157de
+POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/abc3dc20-aca2-a611-fd9d-fbaf6d1bdfb5
 
 {
   "deliveryOrder": {
@@ -17,7 +17,7 @@ POST https://simhost-03d88d0efed83a0d3.agni.secondlife.io:12043/cap/662a1e89-f21
 
 ###
 
-POST https://simhost-03d88d0efed83a0d3.agni.secondlife.io:12043/cap/662a1e89-f219-bbda-6167-80ee8c8157de
+POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/abc3dc20-aca2-a611-fd9d-fbaf6d1bdfb5
 
 ping
 
