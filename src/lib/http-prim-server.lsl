@@ -1,3 +1,6 @@
+#ifndef RV_HTTP_SERVER_PRIM
+#define RV_HTTP_SERVER_PRIM
+
 /**
  * RalVend components communicate with each other and with the back-end via 
  * HTTP requests.
@@ -9,8 +12,6 @@
  * Please, never use any variable that begins and ends with __. Instead, use the
  * provided getters/setters functions.
  */
-#ifndef RV_HTTP_SERVER_PRIM
-#define RV_HTTP_SERVER_PRIM
 
 float HTTP_SELF_URL_CHECK_TIMEOUT = 60.0; // 5 minutes
 

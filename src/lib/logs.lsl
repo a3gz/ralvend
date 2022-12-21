@@ -2,7 +2,7 @@
 #define RV_LOGS
 
 integer LOGLEVEL_DEBUG = 0;
-integer LOGLEVEL_NOTICE = 1;
+integer LOGLEVEL_TRACE = 1;
 integer LOGLEVEL_WARNING = 2;
 integer LOGLEVEL_ERROR = 3;
 
@@ -34,9 +34,9 @@ rvLog(string psMessage, integer piLevel) {
   }
 }
 
-rvLogNotice(string psMessage) {
+rvLogTrace(string psMessage) {
   psMessage = psMessage;
-  rvLog(psMessage, LOGLEVEL_NOTICE);
+  rvLog(psMessage, LOGLEVEL_TRACE);
 }
 
 rvLogSetLevel(integer piLevel) {

@@ -1,16 +1,14 @@
 #ifndef RV_HTTP_BACKEND
 #define RV_HTTP_BACKEND
 
-#include "ralvend/scr/lib/raft/http.lsl"
-
 string __gsBackEndAccessToken__ = "";
 string __gsBackEndAccessExpires__ = "";
-string __gsBackEndUrlBase__ = "";
+string __gsBackEndUrlBase__ = "https://roetal.com/xtools/sl/ralvend";
 
 string rvBackEndComposeBearerToken() {
   string sToken = "{"
-    + "token:" + __gsBackEndAccessToken__,
-    + "expires": + __gsBackEndAccessExpires__
+    + "token:\"" + __gsBackEndAccessToken__ + "\","
+    + "expires:\"" + __gsBackEndAccessExpires__ + "\""
     + "}";
   return llStringToBase64(sToken);
 }
@@ -20,14 +18,14 @@ rvBackEndComposeCommonHeaders() {
   rrHTTPSetHeader("Authorization", "Bearer " + rvBackEndComposeBearerToken());
 }
 
-string rvBackEndMakeEndpoint(string psPath) {
+string rvBackEndComposeEndpoint(string psPath) {
   if (llGetSubString(psPath, 0, 0) != "/") {
     psPath = "/" + psPath;
   }
   return __gsBackEndUrlBase__ + psPath;
 }
 
-rvBackEndPost(string psEndpoint, string psBody) {
+key rvBackEndPost(string psEndpoint, string psBody) {
   rvBackEndComposeCommonHeaders();
   return rrHTTPPost(psEndpoint, psBody);
 }

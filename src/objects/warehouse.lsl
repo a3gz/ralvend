@@ -3,8 +3,11 @@
 #include "ralvend/src/lib/logs.lsl"
 #include "ralvend/src/lib/http.lsl"
 #include "ralvend/src/lib/http-prim-server.lsl"
+#include "ralvend/src/lib/http-back-end.lsl"
 #include "ralvend/src/lib/raft/http.lsl"
+#include "ralvend/src/lib/sales.lsl"
 #include "ralvend/src/lib/state-texture.lsl"
+#include "ralvend/src/lib/raft/raft.lsl"
 
 string BE_ENDPOINT_SALES = "/sales";
 
@@ -16,11 +19,11 @@ integer giPingTimeoutCounter = 0;
 key gkOperator;
 list glInitChecklist = [
   /* Is MY URL ready? */ FALSE,
-  /* Am I synchronized with the back-end? */ TRUE /* mockup value*/
+  /* Am I synchronized with the back-end? */ TRUE
 ];
 
-backEndRequestCallback(integer piStatus, list plMetadata, string psBody); {
-  rvLogDebug("RESPONSE FROM BACKEND:")
+backEndRequestCallback(integer piStatus, list plMetadata, string psBody) {
+  rvLogDebug("RESPONSE FROM BACKEND:");
   rvLogDebug("Status: " + (string)piStatus);
   rvLogDebug("Metadata: " + llList2CSV(plMetadata));
   rvLogDebug("Body: " + psBody);
@@ -33,7 +36,7 @@ generateSaleRecord(key gkCustomer, string psProdName, integer piPrice) {
   string sAsJson = rvComposeSaleRecordJson(gkCustomer, psProdName, piPrice);
   rvLogDebug("POST sale record to backend:\n" + sAsJson);
   gkBackEndRequest = rvBackEndPost(
-    rvBackEndMakeEndpoint(BE_ENDPOINT_SALES),
+    rvBackEndComposeEndpoint(BE_ENDPOINT_SALES),
     sAsJson
   );
 }
@@ -101,7 +104,7 @@ sayReport(string psState) {
     sReport += "URL: " + rvGetLastUrl() + "\n";
   }
   if (sReport != "") {
-    rvLogNotice(sReport);
+    rvLogTrace(sReport);
   }
 }
 
