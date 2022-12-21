@@ -1,10 +1,24 @@
-# BackEnd
+# Back-End
 
-RalVend components must to be able to maintain cross-region coummunication so a customer interacting with a Vendor located in region *RA* is able to receive products from a Warehouse located in Region *RD*.
+The back-end functions as an orchestrator and data repository.
 
-This inter-region documentation calls for a mechanism to allow two prims to communicate with one another.
+## Orchestrator
 
-RalVend must be able to function without the need of an external Web server but, we need back-end functionality to allow for inter-region communication.
-To comply with this requirement we provide an BackEnd script that implements the minimum API required by the system.
+The **BackEnd** is the only entity that knows everything about the network:
 
-Switching to an external back-end should be solely a matter of changing the base URL. The endpoints are part of the specification and any back-end must implement them.
+  * How many **Vendor**s are there?
+  * How many **Warehouse**s are there?
+  * Which **Warehouse**s are running?
+
+The **Vendors** communicate wit the **BackEnd** to update its local list of available **Warehouse**s and receive general network health status. This is the only point of contact a **Vendor** has with the **BackEnd**.
+
+The **Warehouse** has a two-ways communication channel with the **BackEnd**.
+The **BackEnd** pings the **Warehouse** to determine whether it's running or not. A **Warehouse** may change it's URL so, although it could be up and running, it would be unreachable so the **BackEnd** flags it as such until the communication is restored.
+The **Warehouse** pings the **BackEnd** to make sure it's still up and to update it's URL. 
+
+## Data repository
+
+  * Sales history.
+  * Customers history.
+  * Which products a customer has purchased (essential for redeliveries).
+  * Anything that may be needed.

@@ -16,3 +16,7 @@ There are multiple other features that can be added to a vendor:
   * Purchase and deliver to someone else. *In this scenario it's the recipient who is allowed to request a redelivery*.
   * Affiliates support. Allow third-parties to use the vendors to sell products they don't own and receive a commission on every sale.
   
+## Vendor requests to the BackEnd
+
+  * Ping the **BackEnd** to make sure it's up.
+  * Request a list of available **Warehouse**s.

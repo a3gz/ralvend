@@ -1,7 +1,16 @@
 # Warehouse
 
-The **Warehouse** is an in-world object that contains the products for sale.
-The object is scripted to deliver the products to the customers and perform administrative sales-related tasks (record sale, capture customer information, update stock, etc).
+The **Warehouse** is an in-world object that contains the products for sale. 
+A warehouse delivers the products to the customers and perform administrative sales-related tasks (record sale, update stock, etc).
+
+**All the Warehouses must have all the products for sale**  
+
+Any **Vendor** may send delivery orders to any **Warehouse**. If the **Warehouse** is running then it must be able to fulfill any order from any vendor about any of the products sold by the merchant.
+
+## Warehouse requests to the BackEnd
+
+  * Ping the **BackEnd** to make sure it's up.
+  * Update it's URL on the **BackEnd**. The **BackEnd** must always know the URLs of all the **Warehouse**s. 
 
 ## Deliver products
 
@@ -16,10 +25,13 @@ A running Warehouse listens for HTTP requests. The request to get a Warehouse to
     {
       "deliveryOrder": {
         "customer": {
-          "key": "<customer key>"
+          "key": "<customer's key>"
         },
         "inventory": {
-          "name": "<inventory name>
+          "name": "<inventory name>"
+        },
+        "order": {
+          "amount": 0.00
         }
       }
     }
