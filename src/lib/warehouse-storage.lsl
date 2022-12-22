@@ -3,17 +3,10 @@
 
 #include "ralvend/src/lib/assoc-lists.lsl"
 
-integer INFINITE_STOCK = -1;
-
-/**
- * Strided list where:
- * i   = Inventory name
- * i+1 = Stock
- */
 list __glWarehouseStorage__ = [];
 
-list rvAddToStorage(string psProdName, integer piStock) {
-  __glWarehouseStorage__ += [psProdName, piStock];
+list rvAddToStorage(string psProdName) {
+  __glWarehouseStorage__ += [psProdName];
   return __glWarehouseStorage__;
 }
 
@@ -21,20 +14,12 @@ rvCleanWarehouseStorage() {
   __glWarehouseStorage__ = [];
 }
 
-integer rvGetStock(string psProdName) {
-  return rvAssocGetInteger(__glWarehouseStorage__, psProdName);
-}
-
 list rvGetStorage() {
   return __glWarehouseStorage__;
 }
 
 integer rvGetStorageSize() {
-  return llGetListLength(__glWarehouseStorage__) / 2;
-}
-
-integer rvIsInfiniteStock(integer piValue) {
-  return piValue == INFINITE_STOCK;
+  return llGetListLength(__glWarehouseStorage__);
 }
 
 integer rvIsProductInStorage(string psProdName) {
