@@ -1,9 +1,8 @@
 # Vendor
 
   * Displays items for sale.
-  * Accepts payment on a selected item from the catalog.
-  * Communicates with the **Warehouse** to get the items delivered.
-  * Takes payment.
+  * Takes payments.
+  * Communicates with the **BackEnd** to post orders.
   * Issues refunds when necessary.
 
 The vendor can be updated by an **Updater** object.
@@ -19,4 +18,4 @@ There are multiple other features that can be added to a vendor:
 ## Vendor requests to the BackEnd
 
   * Ping the **BackEnd** to make sure it's up.
-  * Request a list of available **Warehouse**s.
+  * Post an order.
