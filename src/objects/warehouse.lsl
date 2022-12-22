@@ -5,11 +5,8 @@
 #include "ralvend/src/lib/http-prim-server.lsl"
 #include "ralvend/src/lib/http-back-end.lsl"
 #include "ralvend/src/lib/raft/http.lsl"
-#include "ralvend/src/lib/sales.lsl"
 #include "ralvend/src/lib/state-texture.lsl"
 #include "ralvend/src/lib/raft/raft.lsl"
-
-string BE_ENDPOINT_SALES = "/sales";
 
 integer CHECKLIST_URL = 0;
 integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
@@ -27,18 +24,6 @@ backEndRequestCallback(integer piStatus, list plMetadata, string psBody) {
   rvLogDebug("Status: " + (string)piStatus);
   rvLogDebug("Metadata: " + llList2CSV(plMetadata));
   rvLogDebug("Body: " + psBody);
-}
-
-generateSaleRecord(key gkCustomer, string psProdName, integer piPrice) {
-  rvLogDebug("Delivered: " + psProdName + " to " + llKey2Name(gkCustomer));
-  rvLogDebug("Product sold for $L" + (string)piPrice);
-
-  string sAsJson = rvComposeSaleRecordJson(gkCustomer, psProdName, piPrice);
-  rvLogDebug("POST sale record to backend:\n" + sAsJson);
-  gkBackEndRequest = rvBackEndPost(
-    rvBackEndComposeEndpoint(BE_ENDPOINT_SALES),
-    sAsJson
-  );
 }
 
 float getTimeout() {
@@ -90,7 +75,7 @@ resetStorage() {
   integer iCount = llGetInventoryNumber(INVENTORY_OBJECT);
   for (i = 0; i < iCount; i++) {
     string sProdName = llGetInventoryName(INVENTORY_OBJECT, i);
-    rvAddToStorage(sProdName, INFINITE_STOCK);
+    rvAddToStorage(sProdName);
   }
 }
 
@@ -129,13 +114,17 @@ waitForReadyState(integer piRestartTimer) {
   }
 }
 
+///////////////////////////////////////////////////////////
+// STATE: default
+///////////////////////////////////////////////////////////
+
 default {
   on_rez(integer start_param) {
     resetPingTimeoutCounter();
   }
 
   state_entry() {
-    rvSetStateTexture(STATE_TEXTURE_IDLE);
+    rvApplyStateTexture(STATE_TEXTURE_IDLE);
     rvLogDebug("Stopped.");
     init();
   }
@@ -182,12 +171,13 @@ default {
 }
 
 ///////////////////////////////////////////////////////////
+// STATE: running
 ///////////////////////////////////////////////////////////
 
 state running {
   state_entry() {
     rvCleanHoverText();
-    rvSetStateTexture(STATE_TEXTURE_RUNNING);
+    rvApplyStateTexture(STATE_TEXTURE_RUNNING);
     rvLogWarning("Running...");
     llSetTimerEvent(getTimeout());
   }
@@ -218,31 +208,17 @@ state running {
         if (deliveryOrder == JSON_NULL) {
           llHTTPResponse(pkRequestId, HTTP_STATUS_BAD_REQUEST, psBody);
         } else {
-          key kCustomer = (key)llJsonGetValue(deliveryOrder, ["customer", "key"]);
+          key kCustomer = (key)llJsonGetValue(deliveryOrder, ["customerKey"]);
           string sInventoryName = (string)llJsonGetValue(
             deliveryOrder,
-            ["inventory", "name"]
-          );
-          integer iPrice = (integer)llJsonGetValue(
-            deliveryOrder,
-            ["order", "amount"]
+            ["inventoryName"]
           );
 
           if (!rvIsProductInStorage(sInventoryName)) {
             llHTTPResponse(pkRequestId, HTTP_STATUS_NOT_FOUND, sInventoryName);
           } else {
-            integer iStock = rvGetStock(sInventoryName);
-            integer infiniteStock = rvIsInfiniteStock(iStock);
-            if (infiniteStock || iStock > 0) {
-              llGiveInventory(kCustomer, sInventoryName);
-              if (!infiniteStock) {
-                rvUpdateStockByQty(sInventoryName, -1);
-              }
-              generateSaleRecord(kCustomer, sInventoryName, iPrice);
-              llHTTPResponse(pkRequestId, HTTP_STATUS_OK, psBody);
-            } else {
-              llHTTPResponse(pkRequestId, HTTP_STATUS_NOT_ACCEPTABLE, psBody);
-            }
+            llGiveInventory(kCustomer, sInventoryName);
+            llHTTPResponse(pkRequestId, HTTP_STATUS_OK, psBody);
           }
         }
       }
@@ -288,10 +264,12 @@ state running {
 }
 
 ///////////////////////////////////////////////////////////
+// STATE: paused
 ///////////////////////////////////////////////////////////
 
 state paused {
   state_entry() {
+    rvApplyStateTexture(STATE_TEXTURE_PAUSED);
     float fTimeout = 5.0;
     string sTimeout = (string)((integer)(fTimeout * 100) / 100);
     rvLogDebug("Pausing for " + (string)sTimeout + " seconds...");
@@ -304,11 +282,12 @@ state paused {
 }
 
 ///////////////////////////////////////////////////////////
+// STATE: shutdown
 ///////////////////////////////////////////////////////////
 
 state shutdown {
   state_entry() {
-    rvSetStateTexture(STATE_TEXTURE_SHUTTING_DOWN);
+    rvApplyStateTexture(STATE_TEXTURE_SHUTTING_DOWN);
     rvLogWarning("Shutting down...");
     llSetTimerEvent(3.0);
   }
