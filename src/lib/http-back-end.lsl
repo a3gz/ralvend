@@ -1,6 +1,9 @@
 #ifndef RV_HTTP_BACKEND
 #define RV_HTTP_BACKEND
 
+
+string BE_ENDPOINT_SALES = "/sales";
+
 string __gsBackEndAccessToken__ = "";
 string __gsBackEndAccessExpires__ = "";
 string __gsBackEndUrlBase__ = "https://roetal.com/xtools/sl/ralvend";
@@ -28,6 +31,10 @@ string rvBackEndComposeEndpoint(string psPath) {
 key rvBackEndPost(string psEndpoint, string psBody) {
   rvBackEndComposeCommonHeaders();
   return rrHTTPPost(psEndpoint, psBody);
+}
+
+string rvBackEndGetSalesEndpoint() {
+  return rvBackEndComposeEndpoint(BE_ENDPOINT_SALES);
 }
 
 rvBackEndSetAccessToken(string psValue, string psExpires) {
