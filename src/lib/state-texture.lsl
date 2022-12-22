@@ -36,6 +36,8 @@ rvApplyStateTexture(integer piState) {
     return;
   }
 
+  string sTexture = llList2String(__glStateTextures__, piState);
+
   integer iCanApply = FALSE;
   if (!__giStateTextureCheckInventory__) {
     iCanApply = TRUE;
@@ -52,7 +54,6 @@ rvApplyStateTexture(integer piState) {
   }
 
   if (iCanApply) {
-    sTexture = llList2String(STATE_TEXTURES, piState);
     llSetTexture(sTexture, __giStateTextureFace__);
   }
 }
