@@ -13,7 +13,7 @@
  * provided getters/setters functions.
  */
 
-float HTTP_SELF_URL_CHECK_TIMEOUT = 60.0; // 5 minutes
+float HTTP_SELF_URL_CHECK_TIMEOUT = 60.0;
 
 key __gkUrlRequestKey__;
 key __gkPingRequestKey__;
