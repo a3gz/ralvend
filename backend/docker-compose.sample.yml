@@ -1,0 +1,10 @@
+version: '3.2'
+services:
+  app:
+    container_name: ralvend-api
+    restart: always
+    build: .
+    ports:
+      - 9999:80
+    volumes:
+      - .:/var/www/html

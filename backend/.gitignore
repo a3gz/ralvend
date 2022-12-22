@@ -1,0 +1,10 @@
+*.log
+/Dockerfile
+/docker-compose.yml
+/vendor
+/private/etc
+/private/vendor
+/private/composer.lock
+/private/config.local
+/.deploy/production/phploy.ini
+/.deploy/sandbox/phploy.ini

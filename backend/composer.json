@@ -1,0 +1,13 @@
+{
+  "name": "roetal/ralvend",
+  "type": "project",
+  "description": "Back end for RalVend",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Alejandro Arbiza",
+      "email": "alejandro@roetal.com",
+      "homepage": "https://www.roetal.com"
+    }
+  ]
+}
