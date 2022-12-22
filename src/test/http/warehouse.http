@@ -1,23 +1,19 @@
 
-POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/abc3dc20-aca2-a611-fd9d-fbaf6d1bdfb5
+POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/eebb076f-b314-3069-5cf5-2383a0345ab8
+Authorization: Bearer 123
 
 {
   "deliveryOrder": {
-    "customer": {
-      "key": "b5ab83d9-032c-4013-b10a-1dbf92245ee7"
-    },
-    "inventory": {
-      "name": "How to resize a ball"
-    },
-    "order": {
-      "amount": 50
-    }
+    "customerKey": "b5ab83d9-032c-4013-b10a-1dbf92245ee7",
+    "inventoryName": "How to resize a ball",
+    "orderAmount": 50
   }
 }
 
 ###
 
-POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/abc3dc20-aca2-a611-fd9d-fbaf6d1bdfb5
+POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/eebb076f-b314-3069-5cf5-2383a0345ab8
+Authorization: Bearer 123
 
 ping
 
