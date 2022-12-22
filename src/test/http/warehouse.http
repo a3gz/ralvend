@@ -1,18 +1,22 @@
+#
+# Add your Warehouse's URL to test.
+# If you need to test on a local environment, for instance if you are running
+# OpenSimulator, you will also have to work with non-secure URL: http://
+#
 
-POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/eebb076f-b314-3069-5cf5-2383a0345ab8
+POST https://...
 Authorization: Bearer 123
 
 {
   "deliveryOrder": {
-    "customerKey": "b5ab83d9-032c-4013-b10a-1dbf92245ee7",
-    "inventoryName": "How to resize a ball",
-    "orderAmount": 50
+    "customerKey": "test-avatar-uuid",
+    "inventoryName": "inventory-name"
   }
 }
 
 ###
 
-POST https://simhost-084712371141e3e4a.agni.secondlife.io:12043/cap/eebb076f-b314-3069-5cf5-2383a0345ab8
+POST https://...
 Authorization: Bearer 123
 
 ping
