@@ -15,11 +15,21 @@
 
 float HTTP_SELF_URL_CHECK_TIMEOUT = 60.0;
 
+// Configuration variables
+integer __giUseSecureUrl__ = FALSE;
+
+// Runtime variables
 key __gkUrlRequestKey__;
 key __gkPingRequestKey__;
-float __gfTimeAtLastPing__ = 0;
+integer __giTimeAtLastPing__ = 0;
+integer __giLastPongTimestamp__ = 0;
 integer __giUrlHealthOk__;
 string __gsSecureUrl__ = "";
+
+
+integer getLastPongTimestamp() {
+  return __giLastPongTimestamp__;
+}
 
 string rvGetLastUrl() {
   return __gsSecureUrl__;
@@ -34,13 +44,22 @@ key rvGetUrlRequestId() {
 }
 
 integer rvIsTimeToPingUrl() {
-  float fNextPingAt = __gfTimeAtLastPing__ + HTTP_SELF_URL_CHECK_TIMEOUT;
+  float fNextPingAt = __giTimeAtLastPing__ + HTTP_SELF_URL_CHECK_TIMEOUT;
   float fTime = llGetTime();
   return fTime >= fNextPingAt;
 }
 
 integer rvIsUrlHealthOk() {
   return rvGetLastUrl() != "";
+}
+
+rvMarkLastPongTimestamp() {
+  __giLastPongTimestamp__ = rvUnixTimestamp();
+}
+
+integer rvPingCallback(integer piStatus) {
+  __gkPingRequestKey__ = NULL_KEY;
+  return (piStatus == HTTP_STATUS_OK);
 }
 
 rvPingUrl() {
@@ -53,12 +72,16 @@ rvPingUrl() {
     ],
     "ping"
   );
-  __gfTimeAtLastPing__ = llGetTime();
+  __giTimeAtLastPing__ = rvUnixTimestamp();
 }
 
 rvRequestUrl() {
   rvReleaseUrl();
-  __gkUrlRequestKey__ = llRequestSecureURL();
+  if (__giUseSecureUrl__) {
+    __gkUrlRequestKey__ = llRequestSecureURL();
+  } else {
+    __gkUrlRequestKey__ = llRequestURL();
+  }
 }
 
 rvRequestUrlCallback(key pkRequestId, string psMethod, string psBody) {
@@ -69,11 +92,6 @@ rvRequestUrlCallback(key pkRequestId, string psMethod, string psBody) {
     __gsSecureUrl__ = psBody;
   }
   __giUrlHealthOk__ = TRUE;
-}
-
-integer rvPingCallback(integer piStatus) {
-  __gkPingRequestKey__ = NULL_KEY;
-  return (piStatus == HTTP_STATUS_OK);
 }
 
 rvReleaseUrl() {
