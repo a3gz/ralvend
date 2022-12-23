@@ -1,6 +1,6 @@
 <?php
 
-namespace Lib\Exceptions;
+namespace App\Lib\Exceptions;
 
 use A3gZ\PhpExceptions\HttpException as A3gZHttpException;
 
