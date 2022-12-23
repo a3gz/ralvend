@@ -43,6 +43,7 @@ class AppFactory {
       $routeResolver,
       $middlewareDispatcher
     );
+    $this->slim->addBodyParsingMiddleware();
 
     if ($container->has('appBasePath')) {
       $this->slim->setBasePath($container->get('appBasePath'));
