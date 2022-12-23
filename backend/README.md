@@ -30,6 +30,12 @@ It's up to you to figure out how to do it or hire someone to do it for you.
 RalVend project includes the portions of the back-end necessary for the system to work.
 If you have a shared Web hosting account then you can set up your own back-end and start using RalVend in Second Life. 
 
+### One merchant
+
+This back-end is limited to one single merchant. RalVend's architecture supports multipe merchants but such functionality is not possible with this back-end application as-is.
+
+### File based data management
+
 This application is designed to allow the use of a DBMS such as MySQL, Maria or something else but none of that is shipped out of the box.
 What you get instead is file-based data management. All the data is stored in JSON files.
 
