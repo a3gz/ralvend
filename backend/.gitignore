@@ -2,7 +2,8 @@
 /Dockerfile
 /docker-compose.yml
 /vendor
-/private/etc
+/private/etc/chubby
+/private/etc/temp
 /private/vendor
 /private/composer.lock
 /private/config.local
