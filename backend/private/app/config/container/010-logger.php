@@ -5,7 +5,7 @@ return function ($c) {
   $month = date('m', $time);
   $day = date('d', $time);
   $hour = date('H', $time);
-  $baseDir = \Fat\Helpers\Path::makePrivatePath('/logs'
+  $baseDir = \App\Lib\Path::makeTempPath('/logs'
     . '/' . $year
     . '/' . $month
     . '/' . $day
