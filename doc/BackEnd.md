@@ -19,3 +19,8 @@ The **BackEnd** is the only entity that knows everything about the network:
   * Which products a customer has purchased (essential for redeliveries).
   * Anything that may be needed.
   * Product inventory. Manage products with a limited number of units for sale.
+
+## Endpoints
+
+`GET .../public/tools/keygen`
+Generate unique keys you can use for multiple purposes. Refresh the page as many times as you need to get new values every time.
