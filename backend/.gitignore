@@ -4,6 +4,8 @@
 /vendor
 /private/etc/chubby
 /private/etc/temp
+/private/etc/usr/data
+/private/etc/usr/config.json
 /private/vendor
 /private/composer.lock
 /private/config.local

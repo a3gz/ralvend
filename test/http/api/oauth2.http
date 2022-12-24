@@ -1,0 +1,18 @@
+
+
+POST http://localhost:8195/public/auth/token HTTP/1.1
+Content-Type: application/json 
+
+{
+  "grant_type": "client_credentials",
+  "client_id": "314649-0f48bd-c65068-ccba80-19656a-c2cbc4",
+  "client_secret": "57e23f-b2fe8b-1ad28b-0cbf1d-e131fc-e98a47"
+}
+
+###
+
+GET http://localhost:8195/public/auth/test-token HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzMTQ2NDktMGY0OGJkLWM2NTA2OC1jY2JhODAtMTk2NTZhLWMyY2JjNCIsImp0aSI6Ijg0OTE2YzUzOGVhZTY0MjJlZGRiMzFkMTcyMDRjYmM5MTcxNTFmMDMzMzRlMzhiOTRiODhjNzUwZWM0NDU3M2JkOGNmYzBmODI4ZGQyYWNjIiwiaWF0IjoxNjcxODQwNDQ4LjE4MTgwNiwibmJmIjoxNjcxODQwNDQ4LjE4MTgxLCJleHAiOjE2NzE4NDQwNDgsInN1YiI6IiIsInNjb3BlcyI6W119.Igyu9GpPOyPKZQ3fVqc29Esjaz6npPRBMhM4E2sGIPcVQ5aia5woJoNgs_-ngDsWeOBVGmWlMx4X_t3R0f7Bq51m724LvomlY71CUrw0barBH7mkwFNMeutsjEKp2ExXtxlLFtevn9W00tiHlgav77cSfVhpbKDLAiimWNqUbkUhFIrSQ0AVMizgBfpn0zZGyvnq4AIxMjKi3JOrsKsR4xZE7ZiXusBLX7mFBeQUZNaMMGiYD4p0uiKbxrLa9lNSexdSzGMIvvuewmhZcnja13tO6l6FxfINQl5RqlrhTQ3tNWbWcsGM1vGiDHT2qSkEIf_O1vxnntgne2xbwpDAsg
+  
+###

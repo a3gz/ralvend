@@ -2,19 +2,25 @@
 
 namespace Fat\Helpers;
 
+use Fat\Helpers\FileSystem;
+
 class Path {
   static public function makeAppPath(string $x = '') {
     if (!empty($x) && substr($x, 0, 1) !== '/') {
       $x = "/{$x}";
     }
-    return APP_PATH . $x;
+    $r = APP_PATH . $x;
+    FileSystem::instance()->createDir($r);
+    return $r;
   }
 
   static public function makeEtcPath(string $x = '') {
     if (!empty($x) && substr($x, 0, 1) !== '/') {
       $x = "/{$x}";
     }
-    return ETC_PATH . $x;
+    $r = ETC_PATH . $x;
+    FileSystem::instance()->createDir($r);
+    return $r;
   }
 
   static public function makePluginsPath(string $x = '') {
@@ -29,14 +35,18 @@ class Path {
     if (!empty($x) && substr($x, 0, 1) !== '/') {
       $x = "/{$x}";
     }
-    return PRIVATE_PATH . $x;
+    $r = PRIVATE_PATH . $x;
+    FileSystem::instance()->createDir($r);
+    return $r;
   }
 
   static public function makePublicPath(string $x = '') {
     if (!empty($x) && substr($x, 0, 1) !== '/') {
       $x = "/{$x}";
     }
-    return PUBLIC_PATH . $x;
+    $r = PUBLIC_PATH . $x;
+    FileSystem::instance()->createDir($r);
+    return $r;
   }
 }
 

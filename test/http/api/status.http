@@ -1,0 +1,17 @@
+
+
+POST http://localhost:8195/public/v1/status
+Authorization: Bearer 123
+Content-Type: application/json
+X-SecondLife-Shard: OpenSim
+X-Avatar-Key: 12088ddc-9c88-4a44-a4d0-cd6e838ec956
+X-SecondLife-Owner-Key: 12088ddc-9c88-4a44-a4d0-cd6e838ec956
+X-SecondLife-Object-Key: 982178c0-b990-4352-978a-ecf85552c796
+
+{
+  "url": "http://100.64.100.6:8004/lslhttp/07f652a7-005f-4a01-bf76-b94fd3d96fb6/",
+  "lastPongTimestamp": "123456",
+  "inventory": ["Soccker_Ball_Display"]
+}
+
+###
