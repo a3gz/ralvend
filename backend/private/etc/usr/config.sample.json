@@ -1,0 +1,13 @@
+{
+  "api": {
+    "client" : {
+      "id": "",
+      "secret": "",
+      "name": ""
+    },
+    "accessToken": {
+      "identifier": "",
+      "expiresAt": 0
+    }
+  }
+}

@@ -11,9 +11,9 @@ use Plugins\keygen\lib\KeyGenerator;
 class KeyGenController {
   public function generate(Request $request, Response $response) {
     $generator = new KeyGenerator();
-    $n = 4;
     $keys = [];
-    for ($i=0; $i < $n; $i++) {
+    $numResults = 2;
+    for ($i=0; $i < $numResults; $i++) {
       $keys[] = $generator->generate();
     }
     $tpl = new DefaultTemplate(Path::makePluginsPath('/keygen'));
