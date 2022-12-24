@@ -6,8 +6,12 @@ return [
     'logErrorDetails' => true,
   ],
   'notFoundHandler' => function ($container) {
-    return \Plugins\demo\controllers\NotFountExceptionHandler::class . ':notFound';
+    return \App\Core\Controllers\NotFountExceptionHandler::class . ':notFound';
   },
+  // Take a look at the files inside private/app/lib/DataAdapters to know
+  // more about this.
+  // In particular, the method DataAdapterFactory::makeDataAdapter().
+  'dataAdapter' => 'Json',
   // 'methodNotAllowedHandler' => function($container) {
   //   return \Fat\Handlers\MethodNotAllowedExceptionHandler::class . ':methodNotAllowed';
   // },
