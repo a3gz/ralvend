@@ -14,6 +14,6 @@ class Path extends \Fat\Helpers\Path {
     if (!empty($x) && substr($x, 0, 1) !== '/') {
       $x = "/{$x}";
     }
-    return self::makeTempPath("/usr{$x}");
+    return self::makeEtcPath("/usr{$x}");
   }
 }
