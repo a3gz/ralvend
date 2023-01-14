@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Core\Controllers\RalVend\V1;
 
 abstract class RalVendApiController {}
 
