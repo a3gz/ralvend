@@ -43,6 +43,11 @@ list buildStatusData() {
   ]);
 }
 
+doPing() {
+  rvLogDebug("Ping...");
+  rvPingUrl();
+}
+
 string getReport(string psState) {
   string sReport = "";
   if (psState == "default") {
@@ -145,6 +150,13 @@ setObjectStateProperties(integer piState) {
 
 setOperator(key pKey) {
   gkOperator = pKey;
+}
+
+shutdown() {
+  string sPrefix = "Shutting down: ";
+  rvSetHoverText(sPrefix + "Releasing URL...");
+  rvReleaseUrl();
+  rvSetHoverText(sPrefix + "Done!");
 }
 
 start() {
@@ -328,8 +340,7 @@ state running {
 
   timer() {
     if (rvIsTimeToPingUrl()) {
-      rvLogDebug("Ping...");
-      rvPingUrl();
+      doPing()
     }
   }
 
@@ -366,11 +377,12 @@ state paused {
 state shutting_down {
   state_entry() {
     setObjectStateProperties(STATE_SHUTTING_DOWN);
-    rvLogWarning("Shutting down...");
+    shutdown();
     llSetTimerEvent(5.0);
   }
 
   timer() {
+    rvCleanHoverText();
     llResetScript();
   }
 }
