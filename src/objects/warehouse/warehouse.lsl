@@ -1,7 +1,7 @@
 #include "ralvend/src/lib/warehouse/warehouse-storage.lsl"
+#include "ralvend/src/lib/warehouse/menu.lsl"
 #include "ralvend/src/lib/hover-text.lsl"
 #include "ralvend/src/lib/logs.lsl"
-#include "ralvend/src/lib/dialog.lsl"
 #include "ralvend/src/lib/http.lsl"
 #include "ralvend/src/lib/http-prim-server.lsl"
 #include "ralvend/src/lib/http-back-end.lsl"
@@ -10,11 +10,10 @@
 #include "ralvend/src/lib/time.lsl"
 #include "ralvend/src/lib/raft/raft.lsl"
 
+integer HTTP_SECURE_URL = FALSE;
 integer CHECKLIST_URL = 0;
 integer CHECKLIST_SYNC = 1;
 integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
-
-integer giDialogChannel = 0;
 
 key gkBackEndSyncRequest;
 integer giPingTimeoutCounter = 0;
@@ -37,6 +36,18 @@ list buildStatusData() {
     "inventory", rvGetStorageAsJsonArray(),
     "lastPongTimestamp", getLastPongTimestamp()
   ]);
+}
+
+string getReport(string psState) {
+  string sReport = "";
+  if (psState == "default") {
+    sReport += "State: Stopped.\n";
+    sReport += "URL: " + rvGetLastUrl() + "\n";
+  } else if (psState == "running") {
+    sReport += "State: Running.\n";
+    sReport += "URL: " + rvGetLastUrl() + "\n";
+  }
+  return sReport;
 }
 
 float getTimeout() {
@@ -66,11 +77,14 @@ integer isReady() {
 }
 
 openMenu(string psState) {
+  string sMenuMessage = "";
   if (psState == "default") {
-    sayReport("default");
+    sMenuMessage = getReport("default");
   } else if (psState == "running") {
-    sayReport("running");
+    sMenuMessage = getReport("running");
   }
+  sMenuMessage += "------------------------------------------------------------\n";
+  rvOpenWarehouseMenu(psState, gkOperator, sMenuMessage);
 }
 
 resetBackEndSyncRequest() {
@@ -92,20 +106,6 @@ resetStorage() {
   }
 }
 
-sayReport(string psState) {
-  string sReport = "";
-  if (psState == "default") {
-    sReport += "State: Stopped.\n";
-    sReport += "URL: " + rvGetLastUrl() + "\n";
-  } else if (psState == "running") {
-    sReport += "State: Running.\n";
-    sReport += "URL: " + rvGetLastUrl() + "\n";
-  }
-  if (sReport != "") {
-    rvLogTrace(sReport);
-  }
-}
-
 setInitChecklist(integer piIndex, integer piValue) {
   glInitChecklist = llListReplaceList(
     glInitChecklist,
@@ -116,6 +116,7 @@ setInitChecklist(integer piIndex, integer piValue) {
 }
 
 setObjectStateProperties(integer piState) {
+  llOwnerSay("STATE: " + (string)piState);
   rvApplyStateTexture(piState);
 }
 
@@ -155,7 +156,7 @@ waitForReadyCondition(integer piRestartTimer) {
 
 default {
   on_rez(integer start_param) {
-    rvSetUseSecureUrl(TRUE);
+    rvSetUseSecureUrl(HTTP_SECURE_URL);
     llResetScript();
   }
 
@@ -206,9 +207,6 @@ default {
   }
 
   touch_start(integer piNumTouches) {
-    if (giDialogChannel == 0) {
-      giDialogChannel = rvKey2Integer(llGetKey()) * -1;
-    }
     setOperator(llDetectedKey(0));
     if (isOwnerOperating()) {
       openMenu("default");
