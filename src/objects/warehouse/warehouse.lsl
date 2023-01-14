@@ -1,24 +1,27 @@
 #include "ralvend/src/lib/warehouse/warehouse-storage.lsl"
 #include "ralvend/src/lib/hover-text.lsl"
 #include "ralvend/src/lib/logs.lsl"
+#include "ralvend/src/lib/dialog.lsl"
 #include "ralvend/src/lib/http.lsl"
 #include "ralvend/src/lib/http-prim-server.lsl"
 #include "ralvend/src/lib/http-back-end.lsl"
 #include "ralvend/src/lib/raft/http.lsl"
-#include "ralvend/src/lib/state-texture.lsl"
+#include "ralvend/src/lib/state.lsl"
+#include "ralvend/src/lib/time.lsl"
+#include "ralvend/src/lib/raft/raft.lsl"
 
 integer CHECKLIST_URL = 0;
+integer CHECKLIST_SYNC = 1;
 integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
 
-integer giIsStarting = FALSE;
-integer giMenuChannel = 0;
+integer giDialogChannel = 0;
 
-key gkBackEndRequest;
+key gkBackEndSyncRequest;
 integer giPingTimeoutCounter = 0;
 key gkOperator;
 list glInitChecklist = [
-  /* Is MY URL ready? */ FALSE,
-  /* Am I synchronized with the back-end? */ TRUE
+  /* My URL is ready */ FALSE,
+  /* I'm synchronized with the back-end */ TRUE
 ];
 
 backEndRequestCallback(integer piStatus, list plMetadata, string psBody) {
@@ -26,6 +29,14 @@ backEndRequestCallback(integer piStatus, list plMetadata, string psBody) {
   rvLogDebug("Status: " + (string)piStatus);
   rvLogDebug("Metadata: " + llList2CSV(plMetadata));
   rvLogDebug("Body: " + psBody);
+}
+
+list buildStatusData() {
+  return llList2Json(JSON_OBJECT, [
+    "url", rvGetLastUrl(),
+    "inventory", rvGetStorageAsJsonArray(),
+    "lastPongTimestamp", getLastPongTimestamp()
+  ]);
 }
 
 float getTimeout() {
@@ -38,13 +49,6 @@ float getTimeout() {
 integer incrementPingTimeoutCounter() {
   giPingTimeoutCounter += 1;
   return giPingTimeoutCounter;
-}
-
-init() {
-  rvRequestUrl();
-  resetStorage();
-  waitForReadyState(TRUE);
-  rvLogSetLevel(LOGLEVEL_DEBUG);
 }
 
 integer isOwnerOperating() {
@@ -61,17 +65,16 @@ integer isReady() {
   return iReady;
 }
 
-integer isStarting() {
-  return giIsStarting == TRUE;
-}
-
 openMenu(string psState) {
   if (psState == "default") {
+    sayReport("default");
+  } else if (psState == "running") {
+    sayReport("running");
   }
 }
 
-resetBackEndRequest() {
-  gkBackEndRequest = NULL_KEY;
+resetBackEndSyncRequest() {
+  gkBackEndSyncRequest = NULL_KEY;
 }
 
 resetPingTimeoutCounter() {
@@ -112,15 +115,33 @@ setInitChecklist(integer piIndex, integer piValue) {
   );
 }
 
+setObjectStateProperties(integer piState) {
+  rvApplyStateTexture(piState);
+}
+
 setOperator(key pKey) {
   gkOperator = pKey;
 }
 
-setStarting(integer piStarting) {
-  giIsStarting = piStarting;
+start() {
+  rvCleanHoverText();
+  resetPingTimeoutCounter();
+  rvRequestUrl();
+  resetStorage();
+  waitForReadyCondition(TRUE);
 }
 
-waitForReadyState(integer piRestartTimer) {
+syncWithBackEnd() {
+  // gkBackEndSyncRequest = rvSyncWithBackEnd(buildStatusData());
+}
+
+/**
+ * Starts a timer to wait until initialization tasks are complete and the
+ * object has everything it needs to run.
+ * The global variable `glInitChecklist` defines all the things that need to
+ * occur for the script to go to the `running` state.
+ */
+waitForReadyCondition(integer piRestartTimer) {
   if (!piRestartTimer) {
     llSetTimerEvent(0.0);
   } else {
@@ -134,19 +155,24 @@ waitForReadyState(integer piRestartTimer) {
 
 default {
   on_rez(integer start_param) {
+    rvSetUseSecureUrl(TRUE);
     llResetScript();
   }
-  
+
   state_entry() {
-    setStarting(FALSE);
-    rvSetHoverText("Touch for menu");
-    rvApplyStateTexture(STATE_TEXTURE_IDLE);
     rvLogDebug("Stopped.");
+    rvLogSetLevel(LOGLEVEL_DEBUG);
+    setObjectStateProperties(STATE_IDLE);
+    // The warehouse needs to always be running.
+    // Every time the object falls into the default status, whether it's
+    // because it was just rezzed or it went offline for external reasons
+    // it tries to get back up.
+    start();
   }
 
   changed(integer piChange) {
     if (piChange & (CHANGED_OWNER | CHANGED_REGION | CHANGED_REGION_START)) {
-      init();
+      llResetScript();
     }
 
     if (piChange & CHANGED_INVENTORY) {
@@ -162,47 +188,29 @@ default {
       } else {
         rvLogDebug("My URL is " + rvGetLastUrl());
         setInitChecklist(CHECKLIST_URL, TRUE);
+        syncWithBackEnd();
       }
-    }
-  }
-
-  listen(integer channel, string name, key id, string message) {
-    if (channel == giMenuChannel) {
-      if (message == OPTION_BACK
-        || message == PLACEHOLDER
-        || message == OPTION_CLOSE
-      ) {
-        state default;
-      } else if (message == OPTION_RESET_ALL) {
-        resetSwitches();
-      } else {
-        integer iTmp = (integer)message;
-        if (iTmp >= 0 && iTmp < MAX_SWITCHES) {
-          resetSingleSwitch(llList2String(glTargets, iTmp));
-        }
-      }
-      openMenu();
+    } else {
+      llOwnerSay("Unknown incoming request...");
     }
   }
 
   timer() {
-    waitForReadyState(FALSE);
+    waitForReadyCondition(FALSE);
     if (isReady()) {
       rvLogDebug("Ready! Changing to running state...");
       state running;
     }
     rvLogDebug("Not Ready yet! Wait and check again...");
-    waitForReadyState(TRUE);
+    waitForReadyCondition(TRUE);
   }
 
   touch_start(integer piNumTouches) {
-    setOperator(llDetectedKey(0));
-    if (!isOwnerOperating()) {
-      llSay(0, "Access denied.");
+    if (giDialogChannel == 0) {
+      giDialogChannel = rvKey2Integer(llGetKey()) * -1;
     }
-      if (giMenuChannel == 0) {
-        giMenuChannel = key2Integer(llGetKey()) * -1;
-      }
+    setOperator(llDetectedKey(0));
+    if (isOwnerOperating()) {
       openMenu("default");
     }
   }
@@ -215,14 +223,14 @@ default {
 state running {
   state_entry() {
     rvCleanHoverText();
-    rvApplyStateTexture(STATE_TEXTURE_RUNNING);
+    setObjectStateProperties(STATE_RUNNING);
     rvLogWarning("Running...");
     llSetTimerEvent(getTimeout());
   }
 
   changed(integer piChange) {
     if (piChange & (CHANGED_OWNER | CHANGED_REGION | CHANGED_REGION_START)) {
-      state shutdown;
+      state shutting_down;
     }
 
     if (piChange & CHANGED_INVENTORY) {
@@ -234,12 +242,13 @@ state running {
     rvRequestUrlCallback(pkRequestId, psMethod, psBody);
     if (!rvIsUrlHealthOk()) {
       rvLogError("Failed to get a secure URL:\n \n" + psBody);
-      state shutdown;
+      state shutting_down;
     }
 
     if (psMethod == HTTP_POST) {
       if (psBody == "ping") {
         rvLogDebug("Pong.");
+        rvMarkLastPongTimestamp();
         llHTTPResponse(pkRequestId, HTTP_STATUS_OK, "pong");
       } else {
         string deliveryOrder = llJsonGetValue(psBody, ["deliveryOrder"]);
@@ -268,19 +277,25 @@ state running {
       integer iPingOk = rvPingCallback(piStatus);
       if (!iPingOk) {
         rvLogError("Ping response status: " + (string)piStatus);
-        if (piStatus = 504) {
-          rvLogError("Last ping timed out, I will pause for a while and try again...");
-          state paused;
-        } else {
+        if (piStatus = HTTP_GATEWAY_TIMEOUT) {
           integer iCount = incrementPingTimeoutCounter();
-          if (iCount > PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
-            rvLogError("My URL is no longer responding to pings!, I must shutdown...");
-            state shutdown;
+          if (iCount <= PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
+            rvLogError(
+              "Last ping timed out, I will pause for a while and try again..."
+            );
+            state paused;
+          } else {
+            state shutting_down;
           }
+        } else {
+          rvLogError(
+            "My URL is no longer responding to pings!, I must shutting_down..."
+          );
+          state shutting_down;
         }
       }
-    } else if (pkRequestId == gkBackEndRequest) {
-      resetBackEndRequest();
+    } else if (pkRequestId == gkBackEndSyncRequest) {
+      resetBackEndSyncRequest();
       backEndRequestCallback(piStatus, plMetadata, psBody);
     }
 
@@ -299,7 +314,7 @@ state running {
   touch_start(integer piNumTouches) {
     setOperator(llDetectedKey(0));
     if (isOwnerOperating()) {
-      sayReport("running");
+      openMenu("running");
     }
   }
 }
@@ -310,7 +325,7 @@ state running {
 
 state paused {
   state_entry() {
-    rvApplyStateTexture(STATE_TEXTURE_PAUSED);
+    setObjectStateProperties(STATE_PAUSED);
     float fTimeout = 5.0;
     string sTimeout = (string)((integer)(fTimeout * 100) / 100);
     rvLogDebug("Pausing for " + (string)sTimeout + " seconds...");
@@ -323,14 +338,14 @@ state paused {
 }
 
 ///////////////////////////////////////////////////////////
-// STATE: shutdown
+// STATE: shutting_down
 ///////////////////////////////////////////////////////////
 
-state shutdown {
+state shutting_down {
   state_entry() {
-    rvApplyStateTexture(STATE_TEXTURE_SHUTTING_DOWN);
+    setObjectStateProperties(STATE_SHUTTING_DOWN);
     rvLogWarning("Shutting down...");
-    llSetTimerEvent(3.0);
+    llSetTimerEvent(5.0);
   }
 
   timer() {
