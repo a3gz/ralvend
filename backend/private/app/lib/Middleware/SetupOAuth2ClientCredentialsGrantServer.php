@@ -8,6 +8,7 @@ use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use App\Lib\Security\AuthKeys as KeyService;
 use App\Lib\DataAdapter\DataAdapterFactory;
+use App\Lib\ContainerFacade as DI;
 
 class SetupOAuth2ClientCredentialsGrantServer {
   public function __invoke(Request $request, RequestHandler $handler) {
@@ -36,7 +37,11 @@ class SetupOAuth2ClientCredentialsGrantServer {
 
       $grant = new ClientCredentialsGrant();
       // Time To Live is 1 hour
-      $ttl = new \DateInterval('PT1H');
+
+      $interval = DI::has('accessTokenTTL')
+        ? trim(DI::get('accessTokenTTL'))
+        : 'P10Y';
+      $ttl = new \DateInterval($interval);
 
       // Enable the password grant on the server
       $server->enableGrantType($grant, $ttl);
