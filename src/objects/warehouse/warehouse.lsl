@@ -194,9 +194,9 @@ default {
   }
 
   state_entry() {
+    rvLogSetLevel(LOGLEVEL_TRACE);
     rvLogDebug("Stopped.");
     rvSetUseSecureUrl(HTTP_SECURE_URL);
-    rvLogSetLevel(LOGLEVEL_DEBUG);
     setObjectStateProperties(STATE_IDLE);
 
     readConfig();
@@ -340,7 +340,7 @@ state running {
 
   timer() {
     if (rvIsTimeToPingUrl()) {
-      doPing()
+      doPing();
     }
   }
 
