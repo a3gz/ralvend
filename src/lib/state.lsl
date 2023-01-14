@@ -16,10 +16,10 @@
  * checking the inventory: rvSetStateTextureInventoryCheck(FALSE);
  */
 
-integer STATE_TEXTURE_IDLE = 0;
-integer STATE_TEXTURE_RUNNING = 1;
-integer STATE_TEXTURE_SHUTTING_DOWN = 2;
-integer STATE_TEXTURE_PAUSED = 3;
+integer STATE_IDLE = 0;
+integer STATE_RUNNING = 1;
+integer STATE_SHUTTING_DOWN = 2;
+integer STATE_PAUSED = 3;
 integer MAX_TEXTURE_INDEX = 3;
 
 integer __giStateTextureCheckInventory__ = 1;
