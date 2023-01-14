@@ -99,4 +99,8 @@ rvReleaseUrl() {
   __gsSecureUrl__ = "";
 }
 
+rvSetUseSecureUrl(integer pi) {
+  __giUseSecureUrl__ = pi;
+}
+
 #endif
