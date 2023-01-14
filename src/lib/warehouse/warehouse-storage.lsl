@@ -18,6 +18,15 @@ list rvGetStorage() {
   return __glWarehouseStorage__;
 }
 
+string rvGetStorageAsJsonArray() {
+  list lQuotedList = [];
+  integer i;
+  for (i = 0; i < rvGetStorageSize(); i++) {
+    lQuotedList += ["\"" + llList2String(__glWarehouseStorage__, i)  +"\""];
+  }
+  return llList2Json(JSON_ARRAY, lQuotedList);
+}
+
 integer rvGetStorageSize() {
   return llGetListLength(__glWarehouseStorage__);
 }
@@ -28,13 +37,6 @@ integer rvIsProductInStorage(string psProdName) {
     return FALSE;
   }
   return TRUE;
-}
-
-integer rvUpdateStockByQty(string psProdName, integer piQty) {
-  integer iQty = rvAssocGetInteger(__glWarehouseStorage__, psProdName);
-  iQty += piQty;
-  rvAssocSetInteger(__glWarehouseStorage__, psProdName, iQty);
-  return iQty;
 }
 
 #endif
