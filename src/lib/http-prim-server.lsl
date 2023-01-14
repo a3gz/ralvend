@@ -1,6 +1,8 @@
 #ifndef RV_HTTP_SERVER_PRIM
 #define RV_HTTP_SERVER_PRIM
 
+#include "ralvend/src/lib/time.lsl"
+
 /**
  * RalVend components communicate with each other and with the back-end via 
  * HTTP requests.
