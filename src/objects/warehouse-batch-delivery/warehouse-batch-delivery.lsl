@@ -47,7 +47,7 @@ integer deliver() {
       glDatabase,
       iOffset+STRIDE_INVENTORY_NAME
     );
-    llOwnerSay(sAgentName + " <= " + sInventoryName);
+    rvLogTrace(sAgentName + " <= " + sInventoryName);
     llGiveInventory(kAgentKey, sInventoryName);
     giLastDeliveredEntry = i;
     iBatchCount += 1;

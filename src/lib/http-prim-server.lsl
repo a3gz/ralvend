@@ -47,7 +47,7 @@ key rvGetUrlRequestId() {
 
 integer rvIsTimeToPingUrl() {
   float fNextPingAt = __giTimeAtLastPing__ + HTTP_SELF_URL_CHECK_TIMEOUT;
-  float fTime = llGetTime();
+  float fTime = rvUnixTimestamp();
   return fTime >= fNextPingAt;
 }
 

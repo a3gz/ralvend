@@ -140,7 +140,6 @@ setInitChecklist(integer piIndex, integer piValue) {
 }
 
 setObjectStateProperties(integer piState) {
-  llOwnerSay("STATE: " + (string)piState);
   rvApplyStateTexture(piState);
 }
 
@@ -179,12 +178,12 @@ waitForReadyCondition(integer piRestartTimer) {
 
 default {
   on_rez(integer start_param) {
-    rvSetUseSecureUrl(HTTP_SECURE_URL);
     llResetScript();
   }
 
   state_entry() {
     rvLogDebug("Stopped.");
+    rvSetUseSecureUrl(HTTP_SECURE_URL);
     rvLogSetLevel(LOGLEVEL_DEBUG);
     setObjectStateProperties(STATE_IDLE);
 
@@ -216,7 +215,7 @@ default {
         syncWithBackEnd();
       }
     } else {
-      llOwnerSay("Unknown incoming request...");
+      rvLogDebug("Unknown incoming request...");
     }
   }
 
@@ -272,6 +271,7 @@ state running {
         rvLogDebug("Pong.");
         rvMarkLastPongTimestamp();
         llHTTPResponse(pkRequestId, HTTP_STATUS_OK, "pong");
+        llSetTimerEvent(getTimeout());
       } else {
         string deliveryOrder = llJsonGetValue(psBody, ["deliveryOrder"]);
         if (deliveryOrder == JSON_NULL) {
