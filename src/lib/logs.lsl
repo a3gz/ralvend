@@ -27,7 +27,7 @@ rvLogError(string psMessage) {
 }
 
 rvLog(string psMessage, integer piLevel) {
-  if (piLevel > 0 && piLevel >= __giLogLevel__ && piLevel <= 3) {
+  if (piLevel >= 0 && piLevel >= __giLogLevel__ && piLevel <= 3) {
     key kOwner = llGetOwner();
     psMessage = rvGetLogMessagePrefix(piLevel) + psMessage;
     llInstantMessage(kOwner, psMessage);
