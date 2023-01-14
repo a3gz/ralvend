@@ -1,5 +1,7 @@
 #include "ralvend/src/lib/warehouse/warehouse-storage.lsl"
 #include "ralvend/src/lib/warehouse/menu.lsl"
+#include "ralvend/src/lib/assoc-lists.lsl"
+#include "ralvend/src/lib/config.lsl"
 #include "ralvend/src/lib/hover-text.lsl"
 #include "ralvend/src/lib/logs.lsl"
 #include "ralvend/src/lib/http.lsl"
@@ -14,6 +16,9 @@ integer HTTP_SECURE_URL = FALSE;
 integer CHECKLIST_URL = 0;
 integer CHECKLIST_SYNC = 1;
 integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
+
+string gsConfigNcName = "config.ini";
+list glConfig = [];
 
 key gkBackEndSyncRequest;
 integer giPingTimeoutCounter = 0;
@@ -87,6 +92,12 @@ openMenu(string psState) {
   rvOpenWarehouseMenu(psState, gkOperator, sMenuMessage);
 }
 
+readConfig() {
+  rvSetHoverText("Reading configuration...");
+  rvConfigSetNcName(gsConfigNcName);
+  rvConfigRead();
+}
+
 resetBackEndSyncRequest() {
   gkBackEndSyncRequest = NULL_KEY;
 }
@@ -104,6 +115,19 @@ resetStorage() {
     string sProdName = llGetInventoryName(INVENTORY_OBJECT, i);
     rvAddToStorage(sProdName);
   }
+}
+
+rvCfgUserCallback_OnNewLine(string psLine) {
+  if (llGetSubString(psLine, 0, 0) != "#") {
+    glConfig = rvConfigParseIniLine(psLine, glConfig);
+  }
+}
+
+rvCfgUserCallback_WhenDone() {
+  llOwnerSay(rvAssocGetString(glConfig, "ClientID"));
+  llOwnerSay(rvAssocGetString(glConfig, "ClientSecret"));
+  rvSetHoverText("Starting...");
+  start();
 }
 
 setInitChecklist(integer piIndex, integer piValue) {
@@ -125,7 +149,6 @@ setOperator(key pKey) {
 }
 
 start() {
-  rvCleanHoverText();
   resetPingTimeoutCounter();
   rvRequestUrl();
   resetStorage();
@@ -164,11 +187,8 @@ default {
     rvLogDebug("Stopped.");
     rvLogSetLevel(LOGLEVEL_DEBUG);
     setObjectStateProperties(STATE_IDLE);
-    // The warehouse needs to always be running.
-    // Every time the object falls into the default status, whether it's
-    // because it was just rezzed or it went offline for external reasons
-    // it tries to get back up.
-    start();
+
+    readConfig();
   }
 
   changed(integer piChange) {
@@ -179,6 +199,10 @@ default {
     if (piChange & CHANGED_INVENTORY) {
       resetStorage();
     }
+  }
+
+  dataserver(key queryId, string line) {
+    rvConfigDataServerCallback(queryId, line);
   }
 
   http_request(key pkRequestId, string psMethod, string psBody) {
