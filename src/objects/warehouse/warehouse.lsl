@@ -1,4 +1,4 @@
-#include "ralvend/src/lib/warehouse-storage.lsl"
+#include "ralvend/src/lib/warehouse/warehouse-storage.lsl"
 #include "ralvend/src/lib/hover-text.lsl"
 #include "ralvend/src/lib/logs.lsl"
 #include "ralvend/src/lib/http.lsl"
@@ -6,10 +6,12 @@
 #include "ralvend/src/lib/http-back-end.lsl"
 #include "ralvend/src/lib/raft/http.lsl"
 #include "ralvend/src/lib/state-texture.lsl"
-#include "ralvend/src/lib/raft/raft.lsl"
 
 integer CHECKLIST_URL = 0;
 integer PING_TIMOUT_COUNT_BEFORE_SHUTDOWN = 3;
+
+integer giIsStarting = FALSE;
+integer giMenuChannel = 0;
 
 key gkBackEndRequest;
 integer giPingTimeoutCounter = 0;
@@ -39,7 +41,6 @@ integer incrementPingTimeoutCounter() {
 }
 
 init() {
-  rvCleanHoverText();
   rvRequestUrl();
   resetStorage();
   waitForReadyState(TRUE);
@@ -58,6 +59,15 @@ integer isReady() {
     iReady = iReady && llList2Integer(glInitChecklist, i);
   }
   return iReady;
+}
+
+integer isStarting() {
+  return giIsStarting == TRUE;
+}
+
+openMenu(string psState) {
+  if (psState == "default") {
+  }
 }
 
 resetBackEndRequest() {
@@ -106,6 +116,10 @@ setOperator(key pKey) {
   gkOperator = pKey;
 }
 
+setStarting(integer piStarting) {
+  giIsStarting = piStarting;
+}
+
 waitForReadyState(integer piRestartTimer) {
   if (!piRestartTimer) {
     llSetTimerEvent(0.0);
@@ -120,13 +134,14 @@ waitForReadyState(integer piRestartTimer) {
 
 default {
   on_rez(integer start_param) {
-    resetPingTimeoutCounter();
+    llResetScript();
   }
-
+  
   state_entry() {
+    setStarting(FALSE);
+    rvSetHoverText("Touch for menu");
     rvApplyStateTexture(STATE_TEXTURE_IDLE);
     rvLogDebug("Stopped.");
-    init();
   }
 
   changed(integer piChange) {
@@ -151,6 +166,25 @@ default {
     }
   }
 
+  listen(integer channel, string name, key id, string message) {
+    if (channel == giMenuChannel) {
+      if (message == OPTION_BACK
+        || message == PLACEHOLDER
+        || message == OPTION_CLOSE
+      ) {
+        state default;
+      } else if (message == OPTION_RESET_ALL) {
+        resetSwitches();
+      } else {
+        integer iTmp = (integer)message;
+        if (iTmp >= 0 && iTmp < MAX_SWITCHES) {
+          resetSingleSwitch(llList2String(glTargets, iTmp));
+        }
+      }
+      openMenu();
+    }
+  }
+
   timer() {
     waitForReadyState(FALSE);
     if (isReady()) {
@@ -163,9 +197,13 @@ default {
 
   touch_start(integer piNumTouches) {
     setOperator(llDetectedKey(0));
-    if (isOwnerOperating()) {
-      sayReport("default");
-      resetPingTimeoutCounter();
+    if (!isOwnerOperating()) {
+      llSay(0, "Access denied.");
+    }
+      if (giMenuChannel == 0) {
+        giMenuChannel = key2Integer(llGetKey()) * -1;
+      }
+      openMenu("default");
     }
   }
 }
@@ -234,8 +272,11 @@ state running {
           rvLogError("Last ping timed out, I will pause for a while and try again...");
           state paused;
         } else {
-          rvLogError("My URL is no longer responding to pings!, I must shutdown...");
-          state shutdown;
+          integer iCount = incrementPingTimeoutCounter();
+          if (iCount > PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
+            rvLogError("My URL is no longer responding to pings!, I must shutdown...");
+            state shutdown;
+          }
         }
       }
     } else if (pkRequestId == gkBackEndRequest) {
@@ -293,11 +334,6 @@ state shutdown {
   }
 
   timer() {
-    integer iCount = incrementPingTimeoutCounter();
-    if (iCount <= PING_TIMOUT_COUNT_BEFORE_SHUTDOWN) {
-      state running;
-    } else {
-      llResetScript();
-    }
+    llResetScript();
   }
 }
